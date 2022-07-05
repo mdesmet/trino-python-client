@@ -9,6 +9,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import asyncio
 import math
 from datetime import datetime, time, date, timezone, timedelta
 from decimal import Decimal
@@ -912,6 +913,51 @@ def test_client_tags_special_characters(run_trino):
     client_tags = ["foo %20", "bar=test"]
     query_client_tags = retrieve_client_tags_from_query(run_trino, client_tags)
     assert query_client_tags == client_tags
+
+
+def test_async_fetch_all(run_trino):
+    _, host, port = run_trino
+
+    from trino.aio import connect
+
+    async def main():
+        conn = await connect(
+            host=host,
+            port=port,
+            user="admin",
+            catalog="system",
+            schema="runtime",
+        )
+        cur = await conn.cursor()
+        await cur.execute("SELECT 1")
+        rows = await cur.fetchall()
+        assert rows == [[1]]
+
+    asyncio.run(main())
+
+
+def test_async_fetch_all_concurrent(run_trino):
+    _, host, port = run_trino
+
+    from trino.aio import connect
+
+    async def task(i):
+        conn = await connect(
+            host=host,
+            port=port,
+            user="admin",
+            catalog="system",
+            schema="runtime",
+        )
+        cur = await conn.cursor()
+        await cur.execute("SELECT ?", [i])
+        return await cur.fetchall()
+
+    async def main():
+        results = await asyncio.gather(*[task(i) for i in range(2)])
+        assert results == [[[0]], [[1]]]
+
+    asyncio.run(main())
 
 
 def retrieve_client_tags_from_query(run_trino, client_tags):
