@@ -1,0 +1,8 @@
+---
+contact_links:
+  - name: Ask a question or get support
+    url: https://github.com/trinodb/trino-python-client/discussions
+    about: Ask a question or request support here on Github Discussions
+  - name: Chat with other contributors on Slack
+    url: https://trinodb.slack.com/channels/python-client
+    about: The Trino community is very active and helpful on Slack, with users and developers from all around the world.
